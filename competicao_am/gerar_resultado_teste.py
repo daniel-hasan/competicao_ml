@@ -1,12 +1,14 @@
 from competicao_am.metodo_competicao import MetodoCompeticaoHierarquico
 from sklearn.svm import LinearSVC
 import pandas as pd
+import numpy as np
+
 def gerar_saida_teste( df_data_to_predict, col_classe, num_grupo):
     """
     Assim como os demais códigos da pasta "competicao_am", esta função 
     só poderá ser modificada na fase de geração da solução. 
     """
-
+    np.random.seed(2)
     scikit_method = LinearSVC(C=7, random_state=2)
     ml_method = MetodoCompeticaoHierarquico(scikit_method,"grouped_genre")
     
