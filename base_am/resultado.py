@@ -19,20 +19,24 @@ class Resultado():
         self._revocacao = None
 
     @property
-    def mat_confusao(self) -> np.ndarray:
+    def mat_confusao(self):
         """
         Retorna a matriz de confusão.
-        O retorno np.ndarray é um array numpy, neste caso, a matriz de confusão
         """
         #caso a matriz de confusao já esteja calculada, retorna-la
         if self._mat_confusao  is not None:
             return self._mat_confusao
 
-        #instancia a matriz de confusao como uma matriz de zeros
-        #A matriz de confusão será o máximo entre os valores de self.y e self.predict_y
-        max_class_val = max([max(self.y),max(self.predict_y)])
-        self._mat_confusao = np.zeros((max_class_val+1,max_class_val+1))
 
+        ## Obtem todos os valores de classes
+        set_classes = set(self.y)|set(self.predict_y)
+        #instancia a matriz de confusao como uma matriz de zeros
+        #A matriz de confusão terá o tamanho como o máximo entre os valores de self.y e self.predict_y
+        self._mat_confusao = {}
+        for classe_real in set_classes:
+            self._mat_confusao[classe_real] = {}
+            for classe_predita in set_classes:
+                self._mat_confusao[classe_real][classe_predita] = 0
 
 
         #incrementa os valores da matriz baseada nas listas self.y e self.predict_y
@@ -45,7 +49,7 @@ class Resultado():
         return self._mat_confusao
 
     @property
-    def precisao(self) -> float:
+    def precisao(self):
         """
         Precisão por classe
         """
@@ -53,14 +57,14 @@ class Resultado():
             return self._precisao
 
         #inicialize com um vetor de zero usando np.zeros
-        self._precisao = np.zeros(len(self.mat_confusao))
+        self._precisao = {}
 
         #para cada classe, armazene em self._precisao[classe] o valor relativo à precisão
         #dessa classe
-        for classe in range(len(self.mat_confusao)):
+        for classe in self.mat_confusao.keys():
             #obtnha todos os elementos que foram previstos com essa classe
             num_previstos_classe = 0
-            for classe_real in range(len(self.mat_confusao)):
+            for classe_real in self.mat_confusao.keys():
                 num_previstos_classe += self.mat_confusao[classe_real][classe]
 
             #precisao: numero de elementos previstos corretamente/total de previstos com essa classe
@@ -72,16 +76,16 @@ class Resultado():
                 warnings.warn("Não há elementos previstos para a classe "+str(classe)+" precisão foi definida como zero.", UndefinedMetricWarning)
         return self._precisao
     @property
-    def revocacao(self) -> float:
+    def revocacao(self):
         if self._revocacao is not None:
             return self._revocacao
 
-        self._revocacao = np.zeros(len(self.mat_confusao))
-        for classe in range(len(self.mat_confusao)):
+        self._revocacao = {}
+        for classe in self.mat_confusao.keys():
             #por meio da matriz, obtem todos os elementos que são dessa classe
             num_classe = 0
             num_elementos_classe = 0
-            for classe_prevista in range(len(self.mat_confusao)):
+            for classe_prevista in self.mat_confusao.keys():
                 num_elementos_classe += self.mat_confusao[classe][classe_prevista]
 
             #revocacao: numero de elementos previstos corretamente/total de elementos dessa classe
@@ -93,12 +97,12 @@ class Resultado():
         return self._revocacao
 
     @property
-    def f1_por_classe(self) -> float:
+    def f1_por_classe(self):
         """
         retorna um vetor em que, para cada classe, retorna o seu f1
         """
-        f1 = np.zeros(len(self.mat_confusao))
-        for classe in range(len(self.mat_confusao)):
+        f1 = {}
+        for classe in self.mat_confusao.keys():
             if(self.precisao[classe]+self.revocacao[classe] == 0):
                 f1[classe] = 0
             else:
@@ -106,14 +110,14 @@ class Resultado():
         return f1
 
     @property
-    def macro_f1(self) -> float:
-        return np.average(self.f1_por_classe)
+    def macro_f1(self):
+        return sum(self.f1_por_classe.values())/len(self.f1_por_classe.values())
 
     @property
-    def acuracia(self) -> float:
+    def acuracia(self):
         #quantidade de elementos previstos corretamente
         num_previstos_corretamente = 0
-        for classe in range(len(self.mat_confusao)):
+        for classe in self.mat_confusao.keys():
             num_previstos_corretamente += self.mat_confusao[classe][classe]
 
         return num_previstos_corretamente/len(self.y)
